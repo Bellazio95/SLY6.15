@@ -24,9 +24,7 @@
     //Used for pushing transactions to solana chain
     let customWriteRPCs = ['https://solana-mainnet.api.syndica.io/api-token/2BavA5mJFLhyAD5zUtdJH3ScWDZLej8scmpsW9nW9FQv1oXvCcyEuQJp83QEKa7HaTfPVycr3NYCpzmgUBurPXojqFUzobe3RDwS5ta9Pyvf1h92dDKucKHnYDB1Z7T3xRSM9MRHrVnFpBroJegmbHqKcQZeEgx7c2dRoh1yN3USAhdwz16kGeM9NAxYdJCd3QNx5j46CnNq2FcuMDqLeeXGyUc8L3w9yxzGBMvuzGQJ9BdofPAPj5yD6uS6TtNZJQ4d6xeWjY9UhAZaszq2GPdXowWAhRTcvdZRnNAexdf7sektS5fqGSzUDiFAEDDmJDspXMn6fTpcYS3byv4aWQwbWG92UXVV9AecGon7tsh986h5CsSqGhSjH99X8cpuPLX6kCHoDzfTdPjcGTxquYbfbF5zASgXkAougf7g7RH7NHbPzrLrnJxJxhZt6gjsZ5b2MYo1ZHdS6itcHqwYf2LBnNiNbdkZhBc1T5T9NSaubbFMJBRW6XnTNZLaN',];
 
-    let saRPCs = [
-        'https://rpc.ironforge.network/mainnet?apiKey=01HZFVRZ4A5WVX2NDA4PCPHJ7N',
-    ];
+    let saRPCs = [];
     let readRPCs = customReadRPCs.concat(saRPCs);
     let writeRPCs = customWriteRPCs.concat(saRPCs);
 
