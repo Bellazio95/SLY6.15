@@ -1,14 +1,14 @@
 // ==UserScript==
-// @name         SLY Assistant
+// @name         SLY (0.6.15)
 // @namespace    http://tampermonkey.net/
 // @version      0.6.15
 // @description  try to take over the world!
 // @author       SLY w/ Contributions by niofox, SkyLove512, anthonyra, [AEP] Valkynen
 // @match        https://*.based.staratlas.com/
 // @require      https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js
-// @require      https://raw.githubusercontent.com/ImGroovin/SAGE-Lab-Assistant/main/anchor-browserified.js
-// @require      https://raw.githubusercontent.com/ImGroovin/SAGE-Lab-Assistant/main/buffer-browserified.js
-// @require      https://raw.githubusercontent.com/ImGroovin/SAGE-Lab-Assistant/main/bs58-browserified.js
+// @require      https://raw.githubusercontent.com/Bellazio95/SLY6.15/main/anchor-browserified.js
+// @require      https://raw.githubusercontent.com/Bellazio95/SLY6.15/main/buffer-browserified.js
+// @require      https://raw.githubusercontent.com/Bellazio95/SLY6.15/main/bs58-browserified.js
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=staratlas.com
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -19,10 +19,10 @@
     'use strict';
 
     //Used for reading solana data
-    let customReadRPCs = [];
+    let customReadRPCs = ['https://solana-mainnet.api.syndica.io/api-token/29ycWMVZ6ZrWQJ84RruHaKXh6dSDaZDRZcSTAH1uvku1CgCqnWqWE1yKnrJb2Q4RBPRTP7PE75m9JRpx7iHo2uELEcp4TqFu7mu6513D8BHeN4kzkj5cBo5Dzm2E8qhcQcF1A6x8d5S14DL3unsx3WMT9Y8NiG2jodBsix1fEK5NFSSiQ2NyKtdTxZY2NSW2CA7gyaf9LemTwGhKbVmLaTEEZiGZW8m2vGUf215tRAeGtMdnj7xJyXVdNtUEeSsCCcmaXvdK6b1ppg8Qcx9jcKrtUU5RcWQxzFcSAPRSpeNyQtVQ3n6Pbp2uCK246VQroRAuz5zcwaoJyD2Y7xgsoa6jtBdgbjcYKBnfBmhgJyKxvRdKq1jK8oDvLQPJdYAVxzycAXPfcPGS9DWLrbQgwqY4bKCbQdRqixMWh9LMiVd4K7MyzLF9cRsk254gufBbXcxTfVD6saLRuFEYZmZvAZD6piCE9Hp2rJUthiWjkHpoQuTHr2rp9aCQHKdsr',];
 
     //Used for pushing transactions to solana chain
-    let customWriteRPCs = [];
+    let customWriteRPCs = ['https://solana-mainnet.api.syndica.io/api-token/29ycWMVZ6ZrWQJ84RruHaKXh6dSDaZDRZcSTAH1uvku1CgCqnWqWE1yKnrJb2Q4RBPRTP7PE75m9JRpx7iHo2uELEcp4TqFu7mu6513D8BHeN4kzkj5cBo5Dzm2E8qhcQcF1A6x8d5S14DL3unsx3WMT9Y8NiG2jodBsix1fEK5NFSSiQ2NyKtdTxZY2NSW2CA7gyaf9LemTwGhKbVmLaTEEZiGZW8m2vGUf215tRAeGtMdnj7xJyXVdNtUEeSsCCcmaXvdK6b1ppg8Qcx9jcKrtUU5RcWQxzFcSAPRSpeNyQtVQ3n6Pbp2uCK246VQroRAuz5zcwaoJyD2Y7xgsoa6jtBdgbjcYKBnfBmhgJyKxvRdKq1jK8oDvLQPJdYAVxzycAXPfcPGS9DWLrbQgwqY4bKCbQdRqixMWh9LMiVd4K7MyzLF9cRsk254gufBbXcxTfVD6saLRuFEYZmZvAZD6piCE9Hp2rJUthiWjkHpoQuTHr2rp9aCQHKdsr',];
 
     let saRPCs = [
         'https://rpc.ironforge.network/mainnet?apiKey=01HZFVRZ4A5WVX2NDA4PCPHJ7N',
