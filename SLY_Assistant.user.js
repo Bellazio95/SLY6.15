@@ -19,10 +19,10 @@
     'use strict';
 
     //Used for reading solana data
-    let customReadRPCs = ['https://solana-mainnet.api.syndica.io/api-token/29ycWMVZ6ZrWQJ84RruHaKXh6dSDaZDRZcSTAH1uvku1CgCqnWqWE1yKnrJb2Q4RBPRTP7PE75m9JRpx7iHo2uELEcp4TqFu7mu6513D8BHeN4kzkj5cBo5Dzm2E8qhcQcF1A6x8d5S14DL3unsx3WMT9Y8NiG2jodBsix1fEK5NFSSiQ2NyKtdTxZY2NSW2CA7gyaf9LemTwGhKbVmLaTEEZiGZW8m2vGUf215tRAeGtMdnj7xJyXVdNtUEeSsCCcmaXvdK6b1ppg8Qcx9jcKrtUU5RcWQxzFcSAPRSpeNyQtVQ3n6Pbp2uCK246VQroRAuz5zcwaoJyD2Y7xgsoa6jtBdgbjcYKBnfBmhgJyKxvRdKq1jK8oDvLQPJdYAVxzycAXPfcPGS9DWLrbQgwqY4bKCbQdRqixMWh9LMiVd4K7MyzLF9cRsk254gufBbXcxTfVD6saLRuFEYZmZvAZD6piCE9Hp2rJUthiWjkHpoQuTHr2rp9aCQHKdsr',];
+    let customReadRPCs = ['https://solana-mainnet.api.syndica.io/api-key/2foLkQm2Jv7GrX9UfdV5nfggoWCmCxAD4Tpf67oRr6kBCx1jxVbre4gJxRMeH1fDALNBntdBxiec5z2Bnud8hVvjWvLQU12SKZC',];
 
     //Used for pushing transactions to solana chain
-    let customWriteRPCs = ['https://solana-mainnet.api.syndica.io/api-token/2BavA5mJFLhyAD5zUtdJH3ScWDZLej8scmpsW9nW9FQv1oXvCcyEuQJp83QEKa7HaTfPVycr3NYCpzmgUBurPXojqFUzobe3RDwS5ta9Pyvf1h92dDKucKHnYDB1Z7T3xRSM9MRHrVnFpBroJegmbHqKcQZeEgx7c2dRoh1yN3USAhdwz16kGeM9NAxYdJCd3QNx5j46CnNq2FcuMDqLeeXGyUc8L3w9yxzGBMvuzGQJ9BdofPAPj5yD6uS6TtNZJQ4d6xeWjY9UhAZaszq2GPdXowWAhRTcvdZRnNAexdf7sektS5fqGSzUDiFAEDDmJDspXMn6fTpcYS3byv4aWQwbWG92UXVV9AecGon7tsh986h5CsSqGhSjH99X8cpuPLX6kCHoDzfTdPjcGTxquYbfbF5zASgXkAougf7g7RH7NHbPzrLrnJxJxhZt6gjsZ5b2MYo1ZHdS6itcHqwYf2LBnNiNbdkZhBc1T5T9NSaubbFMJBRW6XnTNZLaN',];
+    let customWriteRPCs = ['https://solana-mainnet.api.syndica.io/api-key/2foLkQm2Jv7GrX9UfdV5nfggoWCmCxAD4Tpf67oRr6kBCx1jxVbre4gJxRMeH1fDALNBntdBxiec5z2Bnud8hVvjWvLQU12SKZC',];
 
     let saRPCs = [];
     let readRPCs = customReadRPCs.concat(saRPCs);
