@@ -1,14 +1,14 @@
 // ==UserScript==
 // @name         SLY Assistant
 // @namespace    http://tampermonkey.net/
-// @version      0.6.28
+// @version      0.6.29
 // @description  try to take over the world!
 // @author       SLY w/ Contributions by niofox, SkyLove512, anthonyra, [AEP] Valkynen, Risingson, Swift42
 // @match        https://*.based.staratlas.com/
 // @require      https://unpkg.com/@solana/web3.js@1.95.8/lib/index.iife.min.js
-// @require      https://raw.githubusercontent.com/Bellazio95/SLY6.15/main/anchor-browserified.js
-// @require      https://raw.githubusercontent.com/Bellazio95/SLY6.15/main/buffer-browserified.js
-// @require      https://raw.githubusercontent.com/Bellazio95/SLY6.15/main/bs58-browserified.js
+// @require      https://raw.githubusercontent.com/ImGroovin/SAGE-Lab-Assistant/main/anchor-browserified.js
+// @require      https://raw.githubusercontent.com/ImGroovin/SAGE-Lab-Assistant/main/buffer-browserified.js
+// @require      https://raw.githubusercontent.com/ImGroovin/SAGE-Lab-Assistant/main/bs58-browserified.js
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=staratlas.com
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -19,12 +19,14 @@
     'use strict';
 
     //Used for reading solana data
-    let customReadRPCs = ['https://solana-mainnet.api.syndica.io/api-key/2foLkQm2Jv7GrX9UfdV5nfggoWCmCxAD4Tpf67oRr6kBCx1jxVbre4gJxRMeH1fDALNBntdBxiec5z2Bnud8hVvjWvLQU12SKZC',];
+    let customReadRPCs = [];
 
     //Used for pushing transactions to solana chain
-    let customWriteRPCs = ['https://solana-mainnet.api.syndica.io/api-key/2foLkQm2Jv7GrX9UfdV5nfggoWCmCxAD4Tpf67oRr6kBCx1jxVbre4gJxRMeH1fDALNBntdBxiec5z2Bnud8hVvjWvLQU12SKZC',];
+    let customWriteRPCs = [];
 
-    let saRPCs = [];
+    let saRPCs = [
+        'https://rpc.ironforge.network/mainnet?apiKey=01JEEEQP3FTZJFCP5RCCKB2NSQ',
+    ];
     let readRPCs = customReadRPCs.concat(saRPCs);
     let writeRPCs = customWriteRPCs.concat(saRPCs);
 
@@ -120,7 +122,7 @@
             savedProfile: globalSettings.savedProfile && globalSettings.savedProfile.length > 0 ? globalSettings.savedProfile : [],
 
 			//How many milliseconds to wait before re-reading the chain for confirmation
-			confirmationCheckingDelay: parseIntDefault(globalSettings.confirmationCheckingDelay, 2000),
+			confirmationCheckingDelay: parseIntDefault(globalSettings.confirmationCheckingDelay, 10000),
 
 			//How much console logging you want to see (higher number = more, 0 = none)
 			debugLogLevel: parseIntDefault(globalSettings.debugLogLevel, 3),
@@ -211,14 +213,14 @@
 	//statsadd end
 
 	//autofee
-	async function alterFees(seconds) {	
+	async function alterFees(seconds) {
 		const proportionFee = (globalSettings.automaticFeeMax <= globalSettings.automaticFeeMin) ? 1 : (currentFee - globalSettings.automaticFeeMin) / ( globalSettings.automaticFeeMax - globalSettings.automaticFeeMin );
 		let thresholdTime = (globalSettings.automaticFeeTimeMax - globalSettings.automaticFeeTimeMin) * proportionFee + globalSettings.automaticFeeTimeMin;
 		if(thresholdTime < globalSettings.automaticFeeTimeMin) { thresholdTime = globalSettings.automaticFeeTimeMin; }
 		if(thresholdTime > globalSettings.automaticFeeTimeMax) { thresholdTime = globalSettings.automaticFeeTimeMax; }
 		let change=0;
 		if(globalSettings.automaticFee) {
-			if(seconds == -1) { 
+			if(seconds == -1) {
 				// tx was resent. We need to adapt fast, so use max fee increase here
 				change = globalSettings.automaticFeeStep;
 			} else {
@@ -243,7 +245,7 @@
 			currentFee = globalSettings.priorityFee;
 		}
 		cLog(3, `Fee change data: Seconds `, seconds, `, thresholdTime `, thresholdTime, `, change `, change, `, new fee: `, currentFee);
-		
+
 		document.getElementById('assist-modal-fee').innerHTML='Fee:'+currentFee;
 	}
 
@@ -386,6 +388,7 @@
     };
     let starbaseData = [];
     let planetData = [];
+    let minableResourceData = null;
     let starbasePlayerData = [];
 
 	let currentFee = globalSettings.priorityFee; //autofee
@@ -404,6 +407,8 @@
 	let seqArr = seqBN.toTwos(64).toArrayLike(BrowserBuffer.Buffer.Buffer, "be", 2);
 	let seq58 = bs58.encode(seqArr);
     let cargoItems = [];
+    let craftableItems = [];
+    let mineItems = [];
     let craftRecipes = [];
     let upgradeRecipes = [];
     let addressLookupTables = [];
@@ -481,15 +486,15 @@
     }
 
     async function getResourceTokens() {
-        const resources = await sageProgram.account.mineItem.all();
-        const craftables = await craftingProgram.account.craftableItem.all();
-        for (let resource of resources) {
+        mineItems = await sageProgram.account.mineItem.all();
+        craftableItems = await craftingProgram.account.craftableItem.all();
+        for (let resource of mineItems) {
             let cargoType = cargoTypes.find(item => item.account.mint.toString() === resource.account.mint.toString());
             let cargoName = (new TextDecoder().decode(new Uint8Array(resource.account.name)).replace(/\0/g, ''));
             let cargoSize = await getCargoTypeSize(cargoType);
             cargoItems.push({'name': cargoName, 'token': resource.account.mint.toString(), 'size': cargoSize});
         }
-        for (let craftable of craftables) {
+        for (let craftable of craftableItems) {
             let cargoType = cargoTypes.find(item => item.account.mint.toString() === craftable.account.mint.toString());
             let cargoName = (new TextDecoder().decode(new Uint8Array(craftable.account.namespace)).replace(/\0/g, ''));
             let cargoSize = await getCargoTypeSize(cargoType);
@@ -839,6 +844,19 @@
         });
     }
 
+    async function getMineableResourceFromPlanet(planet, mineItem) {
+        let needUpdate = minableResourceData && minableResourceData.lastUpdated && Date.now() - minableResourceData.lastUpdated < 1000*60*60*24 ? false : true;
+
+        if (needUpdate) {
+            let mineableResources = await sageProgram.account.resource.all();
+            minableResourceData = {lastUpdated: Date.now(), mineableResources: mineableResources};
+        }
+
+        let mineableResource = minableResourceData.mineableResources.find(item => item.account.location.toString() === planet && item.account.mineItem.toString() === mineItem);
+
+        return mineableResource;
+    }
+
     async function getStarbasePlayer(userProfile, starbase) {
         return new Promise(async resolve => {
             //starbasePlayerData
@@ -1059,7 +1077,7 @@
 						return {txHash, confirmation: signatureStatus}
 				}
 
-				await wait(Math.max(2000, globalSettings.confirmationCheckingDelay));
+				await wait(Math.max(10000, globalSettings.confirmationCheckingDelay));
 				let epochInfo = await solanaReadConnection.getEpochInfo({ commitment: 'confirmed' });
 				curBlockHeight = epochInfo.blockHeight;
 		}
@@ -1078,9 +1096,9 @@
 			let confirmed = false;
 			while (!confirmed) {
 				//let tx = new solanaWeb3.Transaction();
-				
+
 				//const priorityFee = globalSettings.priorityFee ? Math.max(1, Math.ceil(priorityFeeMultiplier * globalSettings.priorityFee * 5)) : 0; //Convert Lamports to microLamports ?
-				//autofee				
+				//autofee
 				const priorityFee = currentFee ? Math.max(1, Math.ceil(priorityFeeMultiplier * currentFee * 5)) : 0; //Convert Lamports to microLamports ?
 				cLog(4,`${FleetTimeStamp(fleetName)} <${opName}> 💳 Fee ${Math.ceil(priorityFee / 5)} lamp`);
                 /*
@@ -1131,7 +1149,7 @@
 			} else {
 				txSigned = await solflare.signAllTransactions([tx]);
 			}
-		}		
+		}
 
                 cLog(4,`${FleetTimeStamp(fleetName)} <${opName}> txSigned: `, txSigned);
 				let txSerialized = await txSigned[0].serialize();
@@ -1199,7 +1217,7 @@
 				let statGroup = ((confirmation && confirmation.value && confirmation.value.err && confirmation.value.err.InstructionError) || (txResult && txResult.meta && txResult.meta.err && txResult.meta.err.InstructionError)) ? 'Txs IxErrors' : 'Txs Confirmed'; //statsadd
 				await alterStats(statGroup,opName,fullMsTaken/1000,'Seconds',1); //statsadd
 				await alterFees(fullMsTaken/1000); //autofee
-				
+
 				resolve(txResult);
 			}
 		});
@@ -2440,7 +2458,7 @@
 
                 await getAccountInfo(userCraft.label, 'Starbase cargo token', starbaseCargoToken) || await createPDA(starbaseCargoToken, starbasePlayerCargoHold, craftRecipe.output.mint, userCraft);
 
-                const [craftableItem] = await craftingProgram.account.craftableItem.all([
+                /*const [craftableItem] = await craftingProgram.account.craftableItem.all([
                     {
                         memcmp: {
                             offset: 9,
@@ -2453,7 +2471,8 @@
                             bytes: craftRecipe.output.mint.toBase58(),
                         },
                     }
-                ]);
+                ]);*/
+                let craftableItem = craftableItems.find(item => item.account.domain.toString() === craftRecipe.domain.toBase58() && item.account.mint.toString() === craftRecipe.output.mint.toBase58());
 
                 let [outputFrom] = await BrowserAnchor.anchor.web3.PublicKey.findProgramAddressSync(
                     [
@@ -2579,7 +2598,7 @@
                 programPK
             );
 
-            const [craftableItem] = await craftingProgram.account.craftableItem.all([
+            /*const [craftableItem] = await craftingProgram.account.craftableItem.all([
                 {
                     memcmp: {
                         offset: 9,
@@ -2592,7 +2611,8 @@
                         bytes: craftingRecipe.input[0].mint.toBase58(),
                     },
                 }
-            ]);
+            ]);*/
+            let craftableItem = craftableItems.find(item => item.account.domain.toString() === craftingRecipe.domain.toBase58() && item.account.mint.toString() === craftingRecipe.input[0].mint.toBase58());
 
             let [outputFrom] = await BrowserAnchor.anchor.web3.PublicKey.findProgramAddressSync(
                 [
@@ -3531,7 +3551,7 @@
 		}
 	}
 
-	async function assistToggle(el) { //statsadd
+	async function assistStatToggle(el) { //statsadd
 		let targetElem = document.querySelector(el);
 		if (targetElem.style.display === 'none') {
 		    targetElem.style.display = 'block';
@@ -3556,6 +3576,7 @@
 				let fleetJson = JSON.stringify(fleetObj);
 				await GM.setValue(key, fleetJson);
 		}
+        await loadGlobalSettings();
 		assistImportToggle();
 	}
 
@@ -3595,7 +3616,7 @@
 
 		globalSettings = {
 			priorityFee: parseIntDefault(document.querySelector('#priorityFee').value, 1),
-			
+
 			//autofee
 			automaticFee: document.querySelector('#automaticFee').checked,
 			automaticFeeStep: parseIntDefault(document.querySelector('#automaticFeeStep').value, 80),
@@ -3606,11 +3627,11 @@
 
 			transportKeep1: document.querySelector('#transportKeep1').checked,
 			minerKeep1: document.querySelector('#minerKeep1').checked,
-			
+
 			//lowPriorityFeeMultiplier: parseIntDefault(document.querySelector('#lowPriorityFeeMultiplier').value, 10),
             saveProfile: saveProfile,
             savedProfile: saveProfile ? (userProfileAcct && userProfileKeyIdx) ? [userProfileAcct.toString(), userProfileKeyIdx, pointsProfileKeyIdx] : [] : [],
-			confirmationCheckingDelay: parseIntDefault(document.querySelector('#confirmationCheckingDelay').value, 200),
+			confirmationCheckingDelay: parseIntDefault(document.querySelector('#confirmationCheckingDelay').value, 10000),
 			debugLogLevel: parseIntDefault(document.querySelector('#debugLogLevel').value, 3),
             craftingJobs: parseIntDefault(document.querySelector('#craftingJobs').value, 4),
 			subwarpShortDist: document.querySelector('#subwarpShortDist').checked,
@@ -3653,7 +3674,7 @@
 
 		document.querySelector('#transportKeep1').checked = globalSettings.transportKeep1;
 		document.querySelector('#minerKeep1').checked = globalSettings.minerKeep1;
-		
+
 		//document.querySelector('#lowPriorityFeeMultiplier').value = globalSettings.lowPriorityFeeMultiplier;
         document.querySelector('#saveProfile').checked = globalSettings.saveProfile;
 		document.querySelector('#confirmationCheckingDelay').value = globalSettings.confirmationCheckingDelay;
@@ -4035,7 +4056,7 @@
 		const fleetSavedData = await GM.getValue(fleetPK, '{}');
 		const fleetParsedData = JSON.parse(fleetSavedData);
 		fleetParsedData.scanEnd = userFleets[i].scanEnd;
-		await GM.setValue(fleetPK, JSON.stringify(fleetParsedData));			
+		await GM.setValue(fleetPK, JSON.stringify(fleetParsedData));
 	}
 
 	async function handleScan(i, fleetCoords, destCoords) {
@@ -4174,7 +4195,7 @@
 
 		}
 		else if (!moved && Date.now() < userFleets[i].scanEnd && userFleets[i].state == 'Idle') {
-			const scanCDExpireTimeStr = `[${TimeToStr(new Date(userFleets[i].scanEnd))}]`;		
+			const scanCDExpireTimeStr = `[${TimeToStr(new Date(userFleets[i].scanEnd))}]`;
 			updateFleetState(userFleets[i], 'Waiting for scan cooldown ' + scanCDExpireTimeStr);
 		}
 	}
@@ -4317,20 +4338,21 @@
 		let destY = userFleets[i].destCoord.split(',')[1].trim();
 		let starbaseX = userFleets[i].starbaseCoord.split(',')[0].trim();
 		let starbaseY = userFleets[i].starbaseCoord.split(',')[1].trim();
-		let [mineItem] = await sageProgram.account.mineItem.all([
+		/*let [mineItem] = await sageProgram.account.mineItem.all([
 				{
 						memcmp: {
 								offset: 105,
 								bytes: userFleets[i].mineResource,
 						},
 				},
-		]);
+		]);*/
+        let mineItem = mineItems.find(item => item.account.mint.toString() === userFleets[i].mineResource);
 		let resourceHardness = mineItem.account.resourceHardness;
 		let planets = await getPlanetsFromCoords(destX, destY);
 		let sageResource = null;
 		let planet = null;
 		for (let planetCheck of planets) {
-			let resourceCheck = await sageProgram.account.resource.all([
+			/*let resourceCheck = await sageProgram.account.resource.all([
 				{
 					memcmp: {
 						offset: 41,
@@ -4343,9 +4365,10 @@
 						bytes: mineItem.publicKey,
 					},
 				},
-			]);
-			if (sageResource === null && resourceCheck.length > 0) {
-				[sageResource] = resourceCheck;
+			]);*/
+            let resourceCheck = await getMineableResourceFromPlanet(planetCheck.publicKey.toString(), mineItem.publicKey.toString());
+			if (sageResource === null && resourceCheck && resourceCheck.publicKey) {
+				sageResource = resourceCheck;
 				planet = planetCheck
 			}
 		}
@@ -4358,7 +4381,6 @@
 			updateFleetState(userFleets[i], `ERROR: ${resShort} not found at mining location`);
             return;
 		}
-
 		// fleet PDA
 		let [fleetResourceToken] = await BrowserAnchor.anchor.web3.PublicKey.findProgramAddressSync(
 				[
@@ -4492,7 +4514,7 @@
 					//if (currentResourceCnt > 0) {
 					let unloadAmount = currentResourceCnt;
 					if(globalSettings.minerKeep1 && unloadAmount > 0) { unloadAmount -= 1; }
-					if (unloadAmount > 0) {					
+					if (unloadAmount > 0) {
 						await execCargoFromFleetToStarbase(userFleets[i], userFleets[i].cargoHold, userFleets[i].mineResource, userFleets[i].starbaseCoord, currentResourceCnt);
 						//await wait(2000);
 					}
@@ -5455,7 +5477,7 @@
                 }
                 if(!enoughAtlas) {
                     updateFleetState(userCraft, 'Not enough Atlas: ' + targetRecipe.craftRecipe.name + (userCraft.item!=targetRecipe.craftRecipe.name?' ('+userCraft.item+')':''));
-                } else {					
+                } else {
                     let activityInfo = activityType == 'Crafting' ? "Starting: " + targetRecipe.craftRecipe.name + (userCraft.item!=targetRecipe.craftRecipe.name?' ('+userCraft.item+')':'') : 'Upgrade Starting';
                     updateFleetState(userCraft, activityInfo);
                     let result = await execStartCrafting(starbase, starbasePlayer, starbasePlayerCargoHoldsAndTokens, targetRecipe.craftRecipe, craftAmount, userCraft);
@@ -5489,7 +5511,7 @@
                 }
                 else {
                     updateFleetState(userCraft, 'Waiting for material' + materialStr);
-                }		    
+                }
                 await updateCraft(userCraft);
             }
         }
@@ -5536,7 +5558,7 @@
 
 		if(enableAssistant) setTimeout(tokenCheck, 10000);
 	}
-	
+
 	async function fleetHealthCheck() {
 		if (!enableAssistant) return;
 
@@ -5751,7 +5773,7 @@
 				excludeFleets=globalSettings.excludeFleets.trim().replaceAll("\r","").split("\n");
 			}
 			cLog(1, 'initUser: excludeFleets ',excludeFleets);
-			
+
 			for (let fleet of userFleetAccts) {
 				let fleetLabel = (new TextDecoder("utf-8").decode(new Uint8Array(fleet.account.fleetLabel))).replace(/\0/g, '');
 
@@ -6058,7 +6080,7 @@
 			let assistStatsButton = document.createElement('button');
 			assistStatsButton.id = 'assistStatsBtn';
 			assistStatsButton.classList.add('assist-btn','assist-btn-alt');
-			assistStatsButton.addEventListener('click', function(e) {assistToggle('#assistStats');});
+			assistStatsButton.addEventListener('click', function(e) {assistStatToggle('#assistStats');});
 			let assistStatsSpan = document.createElement('span');
 			assistStatsSpan.innerText = 'Statistics';
 			assistStatsSpan.style.fontSize = '14px';
@@ -6143,7 +6165,7 @@
 			let assistCheckFleetBtn = document.querySelector('#checkFleetBtn');
 			assistCheckFleetBtn.addEventListener('click', function(e) {getFleetCntAtCoords();});
 			let assistStatsClose = document.querySelector('#assistStats .assist-modal-close'); //statsadd
-			assistStatsClose.addEventListener('click', function(e) {assistToggle('#assistStats');}); //statsadd
+			assistStatsClose.addEventListener('click', function(e) {assistStatToggle('#assistStats');}); //statsadd
 			let assistStatsReset = document.querySelector('#assistStats #assist-stats-reset'); //statsadd
 			assistStatsReset.addEventListener('click', function(e) { transactionStats={ "start": (Math.round(Date.now() / 1000)), "groups":{} }; document.querySelector('#assistStatsContent').innerHTML=''; }); //statsadd
 			let configImportExport = document.querySelector('#configImportExport');
